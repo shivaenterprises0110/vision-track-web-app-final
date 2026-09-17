@@ -1,4 +1,5 @@
 // src/pages/Login.jsx
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { HiMenu, HiX } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -15,6 +16,9 @@ const slides = [
 
 
 export default function Login() {
+
+    const [showPassword, setShowPassword] = useState(false);
+
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -185,23 +189,27 @@ export default function Login() {
                         </div>
 
                         <div className="mb-5">
-
                             <label className="block mb-2 font-semibold text-gray-700">
-
                                 Password
-
                             </label>
 
-                            <input
-                                type="password"
-                                className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="Enter password"
-                                value={password}
-                                onChange={(e) =>
-                                    setPassword(e.target.value)
-                                }
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    className="w-full border rounded-lg p-3 pr-12 outline-none focus:ring-2 focus:ring-green-500"
+                                    placeholder="Enter password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
 
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                                </button>
+                            </div>
                         </div>
 
                         {error && (
