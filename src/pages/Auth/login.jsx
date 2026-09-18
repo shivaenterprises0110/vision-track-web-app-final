@@ -130,7 +130,7 @@ export default function Login() {
                 <div className="flex items-center gap-2">
 
                     <img
-                        src="https://cviefvnvftkewddwuktu.supabase.co/storage/v1/object/sign/visiontrack/Ticon.png?token=eyJraWQiOiI5ZmNjOGQ1OC04MDVmLTQyNTYtOTgyYS00NDU3MDZhZGFhNzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aXNpb250cmFjay9UaWNvbi5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg5MzY5NTAxLCJleHAiOjE4MjA5MDU1MDF9.vF4Tq_LshvwFOjpGz--PV6f7gg7TjWlMZFZ7u3YViIg"
+                        src="https://cviefvnvftkewddwuktu.supabase.co/storage/v1/object/sign/visiontrack/bus-icon.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV85ZmNjOGQ1OC04MDVmLTQyNTYtOTgyYS00NDU3MDZhZGFhNzkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aXNpb250cmFjay9idXMtaWNvbi5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MjQ5NjExLCJleHAiOjE4MTg3ODU2MTF9.yNW-gst7s06ngSvletBRnkT3YFAG4e57Qf8K4qeZa-E"
                         className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 animate-bounce"
                         alt="SchoolBusTracker Logo"
                     />

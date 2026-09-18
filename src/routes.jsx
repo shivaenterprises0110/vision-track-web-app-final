@@ -24,6 +24,7 @@ import EditDriver from "./SchoolAdmin/EditDriver";
 import StudentDetails from "./SchoolAdmin/StudentDetails";
 import EditStudent from "./SchoolAdmin/EditStudent";
 import LiveTracking from "./SchoolAdmin/LiveTracking";
+import RouteHistory from "./SchoolAdmin/RouteHistory";
 
 const routes = () => {
     return (
@@ -60,10 +61,17 @@ const routes = () => {
                         path="/school/students/edit/:id"
                         element={<EditStudent />}
                     />
-                    
+
                     <Route
                         path="/school/live-tracking"
                         element={<LiveTracking />}
+                    />
+
+                    {/* Route History */}
+
+                    <Route
+                        path="/school/route-history"
+                        element={<RouteHistory />}
                     />
 
                 </Route>

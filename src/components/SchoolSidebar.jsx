@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FaRoute } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FaHome,
@@ -216,6 +217,15 @@ export default function SchoolSidebar({
               >
                 List Buses
               </Link>
+
+              <Link
+                to="/school/route-history"
+                onClick={() => setSidebarOpen(false)}
+                className={menuClass("/school/route-history")}
+              >
+                Route History
+              </Link>
+              
             </div>
           )}
 
