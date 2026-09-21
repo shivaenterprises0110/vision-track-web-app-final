@@ -112,7 +112,7 @@ export default function LiveTracking() {
                             ]}
                         >
                             <Popup>
-                                <div className="min-w-[190px]">
+                                <div className="min-w-47.5">
                                     <h3 className="font-bold text-base mb-1">
                                         {bus.bus_name}
                                     </h3>
