@@ -176,7 +176,12 @@ export default function RouteHistory() {
                   Number(route[0].longitude),
                 ]}
               >
-                <Popup>🟢 Trip Started</Popup>
+                <Popup>
+                  <div>
+                    <b>🟢 Trip Started</b><br />
+                    {new Date(route[0].recorded_at).toLocaleString("en-IN")}
+                  </div>
+                </Popup>
               </Marker>
 
               {/* End Point */}
@@ -187,7 +192,12 @@ export default function RouteHistory() {
                   Number(route[route.length - 1].longitude),
                 ]}
               >
-                <Popup>🏁 Trip Ended</Popup>
+                <Popup>
+                  <div>
+                    <b>🏁 Trip Ended</b><br />
+                    {new Date(route[route.length - 1].recorded_at).toLocaleString("en-IN")}
+                  </div>
+                </Popup>
               </Marker>
             </>
           )}

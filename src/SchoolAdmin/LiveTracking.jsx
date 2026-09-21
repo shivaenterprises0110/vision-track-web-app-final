@@ -68,6 +68,8 @@ export default function LiveTracking() {
                 Number(validBuses[0].longitude),
             ]
             : [17.2899, 76.8176];
+
+
     return (
         <div className="p-0">
             <h1 className="text-4xl font-bold mb-5">
@@ -110,9 +112,42 @@ export default function LiveTracking() {
                             ]}
                         >
                             <Popup>
-                                <b>{bus.bus_name}</b><br />
-                                {bus.bus_number}<br />
-                                Speed: {bus.speed} km/h
+                                <div className="min-w-[190px]">
+                                    <h3 className="font-bold text-base mb-1">
+                                        {bus.bus_name}
+                                    </h3>
+
+                                    <p>🚌 {bus.bus_number}</p>
+                                    <p>⚡ {bus.speed} km/h</p>
+
+                                    <div className="border-t my-2"></div>
+
+                                    <p className="font-medium">
+                                        {bus.geofence_status === "ENTER" && (
+                                            <span className="text-green-600">
+                                                🟢 Inside School
+                                            </span>
+                                        )}
+
+                                        {bus.geofence_status === "EXIT" && (
+                                            <span className="text-red-600">
+                                                🔴 Outside School
+                                            </span>
+                                        )}
+
+                                        {bus.geofence_status === "UNKNOWN" && (
+                                            <span className="text-gray-500">
+                                                ⚪ No Status
+                                            </span>
+                                        )}
+                                    </p>
+
+                                    {bus.geofence_time && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {new Date(bus.geofence_time).toLocaleString("en-IN")}
+                                        </p>
+                                    )}
+                                </div>
                             </Popup>
                         </Marker>
                     ))}

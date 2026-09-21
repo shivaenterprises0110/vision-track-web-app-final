@@ -24,6 +24,11 @@ export default function AddSchool() {
     pincode: "",
     address: "",
 
+    // Geofence
+    latitude: "",
+    longitude: "",
+    geofenceRadius: "150",
+
     totalStudents: "",
     totalDrivers: "",
     totalBuses: "",
@@ -67,6 +72,10 @@ export default function AddSchool() {
         email: school.schoolEmail,
         phone: school.phone,
         address: school.address,
+
+        latitude: Number(school.latitude),
+        longitude: Number(school.longitude),
+        geofence_radius: Number(school.geofenceRadius),
 
         admin_name: school.adminName,
         user_id: school.userId,
@@ -227,6 +236,53 @@ export default function AddSchool() {
             </div>
 
             <div>
+              <label className="block mb-2 font-medium">
+                Latitude
+              </label>
+
+              <input
+                type="number"
+                step="any"
+                name="latitude"
+                value={school.latitude}
+                onChange={handleChange}
+                placeholder="17.2899186"
+                className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium">
+                Longitude
+              </label>
+
+              <input
+                type="number"
+                step="any"
+                name="longitude"
+                value={school.longitude}
+                onChange={handleChange}
+                placeholder="76.8176883"
+                className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium">
+                Geofence Radius (Meters)
+              </label>
+
+              <input
+                type="number"
+                name="geofenceRadius"
+                value={school.geofenceRadius}
+                onChange={handleChange}
+                placeholder="150"
+                className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
 
               <label className="block mb-2 font-medium">
                 City
@@ -314,7 +370,7 @@ export default function AddSchool() {
 
             </div>
 
-            <div>
+            {/* <div>
 
               <label className="block mb-2 font-medium">
                 User ID
@@ -329,7 +385,7 @@ export default function AddSchool() {
                 className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
               />
 
-            </div>
+            </div> */}
 
             <div>
 
