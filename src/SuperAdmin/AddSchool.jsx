@@ -101,7 +101,7 @@ export default function AddSchool() {
 
       {/* Header */}
 
-      <div className="rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-500 text-white p-8 shadow-lg">
+      <div className="rounded-2xl bg-linear-to-r from-blue-700 via-blue-600 to-cyan-500 text-white p-8 shadow-lg">
 
         <h1 className="text-4xl font-bold">
           Add New School
@@ -451,7 +451,7 @@ export default function AddSchool() {
 
           <button
             type="submit"
-            className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-semibold shadow-lg transition"
+            className="px-8 py-3 rounded-xl bg-linear-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-semibold shadow-lg transition"
           >
             Save School
           </button>

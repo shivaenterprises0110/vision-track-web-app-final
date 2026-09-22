@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import API_URL from "../api";
 import {
@@ -43,6 +43,11 @@ export default function RouteHistory() {
   const [busId, setBusId] = useState("");
   const [route, setRoute] = useState([]);
 
+  const [hours, setHours] = useState(24);
+
+  const [roadRoute, setRoadRoute] = useState([]);
+
+
   const today = new Date(
     Date.now() - new Date().getTimezoneOffset() * 60000
   )
@@ -67,12 +72,49 @@ export default function RouteHistory() {
 
     try {
       const res = await axios.get(
-        `${API_URL}/tracking/history/${busId}?date=${date}`
+        `${API_URL}/tracking/history/${busId}?date=${date}&hours=${hours}`
       );
-      setRoute(res.data.history || []);
+
+      const history = res.data.history || [];
+
+      setRoute(history);
+
+      // NEW
+      fetchRoadRoute(history);
+
     } catch {
       alert("No route found");
       setRoute([]);
+      setRoadRoute([]);
+    }
+  };
+
+  const fetchRoadRoute = async (gpsPoints) => {
+    if (gpsPoints.length < 2) {
+      setRoadRoute([]);
+      return;
+    }
+
+    try {
+      // OSRM needs longitude,latitude
+      const coordinates = gpsPoints
+        .map((p) => `${p.longitude},${p.latitude}`)
+        .join(";");
+
+      const res = await axios.get(
+        `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`
+      );
+
+      const routeCoords =
+        res.data.routes[0].geometry.coordinates.map(([lng, lat]) => [
+          lat,
+          lng,
+        ]);
+
+      setRoadRoute(routeCoords);
+    } catch (err) {
+      console.log("OSRM Error:", err);
+      setRoadRoute([]);
     }
   };
 
@@ -80,6 +122,39 @@ export default function RouteHistory() {
     Number(p.latitude),
     Number(p.longitude),
   ]);
+
+  // Calculate total distance (km)
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  }
+
+  const totalDistance = useMemo(() => {
+    if (route.length < 2) return 0;
+
+    let distance = 0;
+
+    for (let i = 1; i < route.length; i++) {
+      distance += getDistance(
+        Number(route[i - 1].latitude),
+        Number(route[i - 1].longitude),
+        Number(route[i].latitude),
+        Number(route[i].longitude)
+      );
+    }
+
+    return (distance / 1000).toFixed(2);
+  }, [route]);
 
   const startIcon = L.divIcon({
     html: '<div style="font-size:32px;">🚩</div>',
@@ -128,6 +203,28 @@ export default function RouteHistory() {
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Recording
+          </label>
+
+          <div className="flex gap-2">
+            {[4, 8, 24].map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => setHours(h)}
+                className={`px-4 py-2 rounded-lg font-medium transition ${hours === h
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+              >
+                {h} Hrs
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button
           onClick={loadHistory}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
@@ -161,7 +258,11 @@ export default function RouteHistory() {
 
           {positions.length > 1 && (
             <>
-              <Polyline positions={positions} color="#2563eb" weight={5} />
+              <Polyline
+                positions={roadRoute.length ? roadRoute : positions}
+                color="#2563eb"
+                weight={5}
+              />
               <FitBounds positions={positions} />
             </>
           )}
@@ -195,7 +296,9 @@ export default function RouteHistory() {
                 <Popup>
                   <div>
                     <b>🏁 Trip Ended</b><br />
-                    {new Date(route[route.length - 1].recorded_at).toLocaleString("en-IN")}
+                    📍 {new Date(route[route.length - 1].recorded_at).toLocaleString("en-IN")}
+                    <hr className="my-2" />
+                    <b>🛣 Distance:</b> {totalDistance} km
                   </div>
                 </Popup>
               </Marker>
