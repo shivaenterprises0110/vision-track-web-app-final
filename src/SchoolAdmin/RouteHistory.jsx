@@ -326,7 +326,7 @@ export default function RouteHistory() {
       {/* Filters */}
       <div className="bg-white rounded-xl shadow p-4 mb-4 flex flex-wrap gap-4 items-end">
         <div>
-          <label className="block text-sm font-medium mb-1">Employee</label>
+          <label className="block text-sm font-medium mb-1">Bus</label>
           <select
             value={busId}
             onChange={(e) => setBusId(e.target.value)}
