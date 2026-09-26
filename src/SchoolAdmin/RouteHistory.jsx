@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import axios from "axios";
+import endicon from "../assets/motorbike.png";
 import API_URL from "../api";
 import {
   MapContainer,
@@ -24,14 +25,22 @@ L.Icon.Default.mergeOptions({
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-function FitBounds({ positions }) {
+function FitBounds({ positions, videoMode }) {
   const map = useMap();
+  const hasFitted = useRef(false);
 
   useEffect(() => {
-    if (positions.length > 1) {
-      map.fitBounds(positions, { padding: [50, 50] });
+    // Reset when leaving video mode
+    if (!videoMode) {
+      hasFitted.current = false;
     }
-  }, [positions]);
+
+    // Fit only once when video starts
+    if (videoMode && positions.length > 1 && !hasFitted.current) {
+      map.fitBounds(positions, { padding: [50, 50] });
+      hasFitted.current = true;
+    }
+  }, [videoMode, positions]);
 
   return null;
 }
@@ -47,6 +56,18 @@ export default function RouteHistory() {
 
   const [roadRoute, setRoadRoute] = useState([]);
 
+  const [roadCurrentIndex, setRoadCurrentIndex] = useState(0);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [videoMode, setVideoMode] = useState(false);
+
+  // ADD THIS
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+
+  const timerRef = useRef(null);
+
+  const [map, setMap] = useState(null);
 
   const today = new Date(
     Date.now() - new Date().getTimezoneOffset() * 60000
@@ -59,6 +80,34 @@ export default function RouteHistory() {
   useEffect(() => {
     fetchBuses();
   }, []);
+
+  useEffect(() => {
+    if (!isPlaying || roadRoute.length === 0) return;
+
+    clearInterval(timerRef.current);
+
+    const interval = 40 / playbackSpeed;
+
+    timerRef.current = setInterval(() => {
+      setRoadCurrentIndex((prev) => {
+        if (prev >= roadRoute.length - 1) {
+          clearInterval(timerRef.current);
+          setIsPlaying(false);
+          return prev;
+        }
+
+        const gpsIndex = Math.floor(
+          (prev / (roadRoute.length - 1)) * (route.length - 1)
+        );
+
+        setCurrentIndex(gpsIndex);
+
+        return prev + 1;
+      });
+    }, interval);
+
+    return () => clearInterval(timerRef.current);
+  }, [isPlaying, playbackSpeed, roadRoute]);
 
   const fetchBuses = async () => {
     const res = await axios.get(
@@ -79,8 +128,13 @@ export default function RouteHistory() {
 
       setRoute(history);
 
+      setCurrentIndex(0);
+      setRoadCurrentIndex(0);
+      setIsPlaying(false);
+
       // NEW
       fetchRoadRoute(history);
+
 
     } catch {
       alert("No route found");
@@ -118,10 +172,102 @@ export default function RouteHistory() {
     }
   };
 
+  const playRoute = () => {
+    if (route.length < 2) return;
+
+    setVideoMode(true);
+    setCurrentIndex(0);
+    setRoadCurrentIndex(0);
+    setIsPlaying(true);
+
+    clearInterval(timerRef.current);
+
+    const interval = 500 / playbackSpeed;
+
+    timerRef.current = setInterval(() => {
+      setCurrentIndex((prev) => {
+        if (prev >= route.length - 1) {
+          clearInterval(timerRef.current);
+          setIsPlaying(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, interval);
+  };
+
+  const pauseRoute = () => {
+    clearInterval(timerRef.current);
+    setIsPlaying(false);
+  };
+
+  const resumeRoute = () => {
+    if (currentIndex >= route.length - 1) return;
+
+    setIsPlaying(true);
+
+    clearInterval(timerRef.current);
+
+    timerRef.current = setInterval(() => {
+      setCurrentIndex((prev) => {
+        if (prev >= route.length - 1) {
+          clearInterval(timerRef.current);
+          setIsPlaying(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 500 / playbackSpeed);
+  };
+
+  const skipForward = () => {
+    const gpsIndex = Math.min(currentIndex + 10, route.length - 1);
+
+    setCurrentIndex(gpsIndex);
+
+    const roadIdx = Math.floor(
+      (gpsIndex / (route.length - 1)) *
+      (roadRoute.length - 1)
+    );
+
+    setRoadCurrentIndex(roadIdx);
+  };
+
+  const skipBackward = () => {
+    const gpsIndex = Math.max(currentIndex - 10, 0);
+
+    setCurrentIndex(gpsIndex);
+
+    const roadIdx = Math.floor(
+      (gpsIndex / (route.length - 1)) *
+      (roadRoute.length - 1)
+    );
+
+    setRoadCurrentIndex(roadIdx);
+  };
+
+  const resetRoute = () => {
+    clearInterval(timerRef.current);
+    setIsPlaying(false);
+    setCurrentIndex(0);
+    setRoadCurrentIndex(0);   // ← add this line
+  };
+
   const positions = route.map((p) => [
     Number(p.latitude),
     Number(p.longitude),
   ]);
+
+  const roadIndex =
+    roadRoute.length > 0 && route.length > 1
+      ? Math.floor(
+        (currentIndex / (route.length - 1)) * (roadRoute.length - 1)
+      )
+      : currentIndex;
+
+  const visibleRoadRoute = videoMode
+    ? roadRoute.slice(0, roadCurrentIndex + 1)
+    : roadRoute;
 
   // Calculate total distance (km)
   function getDistance(lat1, lon1, lat2, lon2) {
@@ -157,18 +303,21 @@ export default function RouteHistory() {
   }, [route]);
 
   const startIcon = L.divIcon({
-    html: '<div style="font-size:32px;">🚩</div>',
+    html: '<div style="font-size:30px;">🚩</div>',
     className: "",
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -28],
   });
 
-  const endIcon = L.divIcon({
-    html: '<div style="font-size:32px;">🚌</div>',
-    className: "",
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  });
+  const endIcon = L.icon({
+  iconUrl: endicon,
+  iconSize: [42, 42],
+  iconAnchor: [21, 21],
+  popupAnchor: [0, -20],
+});
+
+
 
   return (
     <div >
@@ -177,7 +326,7 @@ export default function RouteHistory() {
       {/* Filters */}
       <div className="bg-white rounded-xl shadow p-4 mb-4 flex flex-wrap gap-4 items-end">
         <div>
-          <label className="block text-sm font-medium mb-1">Bus</label>
+          <label className="block text-sm font-medium mb-1">Employee</label>
           <select
             value={busId}
             onChange={(e) => setBusId(e.target.value)}
@@ -225,12 +374,116 @@ export default function RouteHistory() {
           </div>
         </div>
 
-        <button
-          onClick={loadHistory}
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-        >
-          View Route
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={loadHistory}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+          >
+            🗺 View Route
+          </button>
+
+          <button
+            onClick={playRoute}
+            disabled={route.length === 0}
+            className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+          >
+            🎥 Video View
+          </button>
+          {videoMode && (
+            <button
+              onClick={() => {
+                pauseRoute();
+                setVideoMode(false);
+                setCurrentIndex(route.length - 1);
+                setRoadCurrentIndex(roadRoute.length - 1);
+              }}
+              className="bg-gray-700 text-white px-5 py-2 rounded-lg hover:bg-gray-800"
+            >
+              exit Video View
+            </button>
+          )}
+
+          {videoMode && route.length > 0 && (
+            <div className="bg-gray-100 rounded-xl p-3 mt-3">
+
+              <div className="flex justify-between text-sm mb-2">
+                <span>{currentIndex + 1} / {route.length}</span>
+                <span>
+                  {route[currentIndex] &&
+                    new Date(route[currentIndex].recorded_at)
+                      .toLocaleTimeString("en-IN")}
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min={0}
+                max={route.length - 1}
+                value={currentIndex}
+                onChange={(e) => {
+                  const gpsIndex = Number(e.target.value);
+
+                  setCurrentIndex(gpsIndex);
+
+                  const roadIdx = Math.floor(
+                    (gpsIndex / (route.length - 1)) *
+                    (roadRoute.length - 1)
+                  );
+
+                  setRoadCurrentIndex(roadIdx);
+                }}
+                className="w-full"
+              />
+
+              <div className="flex items-center justify-between flex-wrap gap-3">
+
+                <div className="flex gap-2">
+
+                  <button onClick={resetRoute} className="px-3 py-2 bg-white rounded-lg">
+                    🔄
+                  </button>
+
+                  <button onClick={skipBackward} className="px-3 py-2 bg-white rounded-lg">
+                    ⏪10
+                  </button>
+
+                  {isPlaying ? (
+                    <button
+                      onClick={pauseRoute}
+                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg"
+                    >
+                      ⏸
+                    </button>
+                  ) : (
+                    <button
+                      onClick={resumeRoute}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                    >
+                      ▶
+                    </button>
+                  )}
+
+                  <button onClick={skipForward} className="px-3 py-2 bg-white rounded-lg">
+                    10⏩
+                  </button>
+
+                </div>
+
+                <select
+                  value={playbackSpeed}
+                  onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                  className="border rounded-lg px-2 py-1"
+                >
+                  <option value={0.5}>0.5×</option>
+                  <option value={1}>1×</option>
+                  <option value={2}>2×</option>
+                  <option value={4}>4×</option>
+                </select>
+
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Map */}
@@ -238,6 +491,7 @@ export default function RouteHistory() {
         <MapContainer
           center={[17.2899, 76.8176]}
           zoom={13}
+          whenCreated={setMap}
           style={{ height: "75vh", width: "100%" }}
         >
           <LayersControl position="topright">
@@ -259,19 +513,23 @@ export default function RouteHistory() {
           {positions.length > 1 && (
             <>
               <Polyline
-                positions={roadRoute.length ? roadRoute : positions}
+                positions={visibleRoadRoute}
                 color="#2563eb"
                 weight={5}
               />
-              <FitBounds positions={positions} />
+              <FitBounds
+                positions={positions}
+                videoMode={videoMode}
+              />
             </>
           )}
 
           {route.length > 0 && (
             <>
-              {/* Start Point */}
+              {/* Start Marker */}
               <Marker
                 icon={startIcon}
+                zIndexOffset={1000}
                 position={[
                   Number(route[0].latitude),
                   Number(route[0].longitude),
@@ -279,24 +537,37 @@ export default function RouteHistory() {
               >
                 <Popup>
                   <div>
-                    <b>🟢 Trip Started</b><br />
+                    <b>🚩 Trip Started</b><br />
                     {new Date(route[0].recorded_at).toLocaleString("en-IN")}
                   </div>
                 </Popup>
               </Marker>
 
-              {/* End Point */}
+              {/* Start Point */}
               <Marker
                 icon={endIcon}
-                position={[
-                  Number(route[route.length - 1].latitude),
-                  Number(route[route.length - 1].longitude),
-                ]}
+                position={
+                  videoMode
+                    ? roadRoute[
+                    Math.min(roadCurrentIndex, roadRoute.length - 1)
+                    ]
+                    : [
+                      Number(route[route.length - 1].latitude),
+                      Number(route[route.length - 1].longitude),
+                    ]
+                }
               >
                 <Popup>
                   <div>
-                    <b>🏁 Trip Ended</b><br />
-                    📍 {new Date(route[route.length - 1].recorded_at).toLocaleString("en-IN")}
+                    <b>👨‍💼 Employee</b><br />
+                    📍{" "}
+                    {new Date(
+                      route[
+                        videoMode
+                          ? Math.min(currentIndex, route.length - 1)
+                          : route.length - 1
+                      ].recorded_at
+                    ).toLocaleString("en-IN")}
                     <hr className="my-2" />
                     <b>🛣 Distance:</b> {totalDistance} km
                   </div>
